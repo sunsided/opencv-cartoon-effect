@@ -3,7 +3,5 @@ name = "cartoonify"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-opencv = { version = "0.82.1", default-features = false, features = ["imgproc", "imgcodecs", "highgui"] }
+opencv = { version = "0.82.1", default-features = true, features = ["imgproc", "imgcodecs", "highgui"] }
