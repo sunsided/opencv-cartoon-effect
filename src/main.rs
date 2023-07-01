@@ -22,11 +22,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let image = Bgr(imread("grumpy-cat.jpg", IMREAD_COLOR)?);
 
     let lab_image = bgr_to_lab(image)?;
+    let segmented_image = segment_colors(&lab_image)?;
     let image_blurred = anisotropic_blur(&lab_image)?;
     let gray = gray_from_lab(&image_blurred)?;
-    let segmented_image = segment_colors(&lab_image)?;
-    let image = lab_to_bgr(segmented_image)?;
     let dilated_edges = get_edges(gray)?;
+    let image = lab_to_bgr(segmented_image)?;
     let cartoon = combine_image_and_edges(image, dilated_edges)?;
 
     imshow("Cartoon", &cartoon)?;
