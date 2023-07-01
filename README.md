@@ -21,3 +21,5 @@ Here's the input image and the produced result for comparison.
 | Input               | Output                  |
 |---------------------|-------------------------|
 | ![](grumpy-cat.jpg) | ![](cartoonified.jpg)   |
+
+YMMV. 🐱

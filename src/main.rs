@@ -9,11 +9,17 @@ use opencv::prelude::*;
 use opencv::ximgproc::anisotropic_diffusion;
 use std::error::Error;
 
+/// An image in BGR color space.
+struct Bgr(Mat);
+
+/// An image in Lab color space.
 struct Lab(Mat);
+
+/// A grayscale / lightness / luminance image.
 struct Gray(Mat);
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let image = imread("grumpy-cat.jpg", IMREAD_COLOR)?;
+    let image = Bgr(imread("grumpy-cat.jpg", IMREAD_COLOR)?);
 
     let lab_image = bgr_to_lab(image)?;
     let image_blurred = anisotropic_blur(&lab_image)?;
@@ -31,17 +37,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Converts the BGR image to Lab.
-fn bgr_to_lab(image: Mat) -> Result<Lab, Box<dyn Error>> {
+fn bgr_to_lab(Bgr(image): Bgr) -> Result<Lab, Box<dyn Error>> {
     let mut lab_image = Mat::default();
     cvt_color(&image, &mut lab_image, COLOR_BGR2Lab, 0)?;
     Ok(Lab(lab_image))
 }
 
 /// Converts an Lab image back to BGR color space.
-fn lab_to_bgr(Lab(image): Lab) -> Result<Mat, Box<dyn Error>> {
+fn lab_to_bgr(Lab(image): Lab) -> Result<Bgr, Box<dyn Error>> {
     let mut bgr = Mat::default();
     cvt_color(&image, &mut bgr, COLOR_Lab2BGR, 0)?;
-    Ok(bgr)
+    Ok(Bgr(bgr))
 }
 
 /// Extracts the lightness channel from the Lab image.
@@ -121,7 +127,10 @@ fn anisotropic_blur(Lab(lab_image): &Lab) -> Result<Lab, Box<dyn Error>> {
 }
 
 /// Applies the detected edges as brush strokes to the provided image.
-fn combine_image_and_edges(image: Mat, Gray(dilated_edges): Gray) -> Result<Mat, Box<dyn Error>> {
+fn combine_image_and_edges(
+    Bgr(image): Bgr,
+    Gray(dilated_edges): Gray,
+) -> Result<Mat, Box<dyn Error>> {
     let mut cartoon = Mat::default();
     bitwise_and(&image, &image, &mut cartoon, &dilated_edges)?;
     Ok(cartoon)
