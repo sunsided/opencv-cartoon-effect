@@ -11,28 +11,55 @@ use opencv::ximgproc::anisotropic_diffusion;
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut image = imread("grumpy-cat.jpg", IMREAD_COLOR)?;
+    let image = imread("grumpy-cat.jpg", IMREAD_COLOR)?;
 
+    let lab_image = to_lab(&image)?;
+    let image_blurred = anisotropic_blur(&lab_image)?;
+    let gray = gray_from_lab(&image_blurred)?;
+    let image = segment_colors(&lab_image)?;
+    imshow("segmented_image (BGR)", &image)?;
+
+    let dilated_edges = get_edges(gray)?;
+    imshow("dilated_edges", &dilated_edges)?;
+
+    let scalar = Scalar::from((240.0, 240.0, 240.0, 0.0));
+    let mut reduced = Mat::default();
+    bitwise_and(&image, &scalar, &mut reduced, &Mat::default())?;
+
+    let mut cartoon = Mat::default();
+    bitwise_and(&image, &image, &mut cartoon, &dilated_edges)?;
+
+    imwrite("output.jpg", &cartoon, &Vector::default())?;
+
+    imshow("Cartoon", &cartoon)?;
+
+    wait_key(0)?;
+
+    Ok(())
+}
+
+fn anisotropic_blur(lab_image: &Mat) -> Result<Mat, Box<dyn Error>> {
     let mut image_blurred = Mat::default();
     let conductance = 0.1;
     let time_step = 0.1;
     let num_iterations = 10;
     anisotropic_diffusion(
-        &image,
+        &lab_image,
         &mut image_blurred,
         time_step,
         conductance,
         num_iterations,
     )?;
+    Ok(image_blurred)
+}
 
-    let mut lab_image = Mat::default();
-    cvt_color(&image_blurred, &mut lab_image, COLOR_BGR2Lab, 0)?;
-
-    let gray = gray_from_lab(&lab_image)?;
-
+fn to_lab(image: &Mat) -> Result<Mat, Box<dyn Error>> {
     let mut lab_image = Mat::default();
     cvt_color(&image, &mut lab_image, COLOR_BGR2Lab, 0)?;
+    Ok(lab_image)
+}
 
+fn segment_colors(lab_image: &Mat) -> Result<Mat, Box<dyn Error>> {
     let spatial_radius = 10.0;
     let color_radius = 20.0;
     let max_pyramid_level = 1;
@@ -47,9 +74,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         term_criteria,
     )?;
 
+    let mut image = Mat::default();
     cvt_color(&segmented_image, &mut image, COLOR_Lab2BGR, 0)?;
-    imshow("segmented_image (BGR)", &image)?;
+    Ok(image)
+}
 
+fn get_edges(gray: Mat) -> Result<Mat, Box<dyn Error>> {
     let max_binary_value = 255.0;
     let mut edges = Mat::default();
     adaptive_threshold(
@@ -75,22 +105,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         BORDER_REFLECT,
         Scalar::default(),
     )?;
-    imshow("dilated_edges", &dilated_edges)?;
-
-    let scalar = Scalar::from((240.0, 240.0, 240.0, 0.0));
-    let mut reduced = Mat::default();
-    bitwise_and(&image, &scalar, &mut reduced, &Mat::default())?;
-
-    let mut cartoon = Mat::default();
-    bitwise_and(&image, &image, &mut cartoon, &dilated_edges)?;
-
-    imwrite("output.jpg", &cartoon, &Vector::default())?;
-
-    imshow("Cartoon", &cartoon)?;
-
-    wait_key(0)?;
-
-    Ok(())
+    Ok(dilated_edges)
 }
 
 fn gray_from_lab(image_blurred: &Mat) -> Result<Mat, Box<dyn Error>> {
