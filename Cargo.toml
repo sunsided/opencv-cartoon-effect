@@ -1,7 +1,13 @@
 [package]
 name = "cartoonify"
+description = "A cartoon effect with OpenCV"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/sunsided/opencv-cartoon-effect"
+license-file = "LICENSE.md"
+readme = "README.md"
+keywords = ["opencv", "cartoon", "image-processing"]
+categories = ["multimedia::images"]
 
 [dependencies]
 opencv = { version = "0.82.1", default-features = false, features = ["imgproc", "imgcodecs", "highgui", "ximgproc"] }
