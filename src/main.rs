@@ -159,6 +159,7 @@ fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
             INTER_NEAREST,
         )?;
 
+        // Halftone grids are rotated to avoid repetitive patterns.
         let grid = GridPositionIterator::new(
             resized.rows() as _,
             resized.cols() as _,
@@ -176,7 +177,6 @@ fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
             Scalar::default(),
         )?;
 
-        // The grids should be rotated; for simplicity, we simply offset them.
         for GridPoint { x, y } in grid {
             if x >= resized.rows() as _ || y >= resized.cols() as _ {
                 continue;
