@@ -16,8 +16,9 @@ for color reduction to achieve a more comic-like effect.
 
 This, of course, also only works with proper tuning of the parameters.
 
-Here's the input image and the produced result for comparison. An alternative faux-CMYK half-toning step was
-added; to play around with that, run the code with `--features=halftone`.
+Here's the input image and the produced result for comparison. An alternative print-like faux-CMYK half-toning step was
+added using the [rotated-grid](https://github.com/sunsided/rotated-grid) crate;
+to play around with that, simply run the code with `--features=halftone`.
 
 | Input               | Output                       | Halftoned                 |
 |---------------------|------------------------------|---------------------------|
