@@ -9,5 +9,9 @@ readme = "README.md"
 keywords = ["opencv", "cartoon", "image-processing"]
 categories = ["multimedia::images"]
 
+[features]
+halftone = ["dep:rotated-grid"]
+
 [dependencies]
 opencv = { version = "0.82.1", default-features = false, features = ["imgproc", "imgcodecs", "highgui", "ximgproc"] }
+rotated-grid = { version = "0.1.0", optional = true }

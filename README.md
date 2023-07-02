@@ -11,15 +11,16 @@ for more natural looking "strokes", as well as
 for color reduction to achieve a more comic-like effect.
 
 <div align="center" style="text-align: center">
-    <img src="cartoonify.jpg" alt="Cartoonified Grumpy Cat" />
+    <img src="readme/cartoonify.jpg" alt="Cartoonified Grumpy Cat" />
 </div>
 
 This, of course, also only works with proper tuning of the parameters.
 
-Here's the input image and the produced result for comparison.
+Here's the input image and the produced result for comparison. An alternative faux-CMYK half-toning step was
+added; to play around with that, run the code with `--features=halftone`.
 
-| Input               | Output                  |
-|---------------------|-------------------------|
-| ![](grumpy-cat.jpg) | ![](cartoonified.jpg)   |
+| Input               | Output                       | Halftoned                 |
+|---------------------|------------------------------|---------------------------|
+| ![](grumpy-cat.jpg) | ![](readme/cartoonified.jpg) | ![](readme/halftoned.jpg) |
 
 YMMV. 🐱

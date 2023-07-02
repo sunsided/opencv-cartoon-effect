@@ -1,15 +1,14 @@
-use opencv::core::{
-    bitwise_and, merge, split, Point, Scalar, Size, TermCriteria, Vector, BORDER_REFLECT, CV_8UC1,
-};
+use opencv::core::{bitwise_and, split, Point, Scalar, Size, TermCriteria, Vector, BORDER_REFLECT};
 use opencv::highgui::{imshow, wait_key};
 use opencv::imgcodecs::{imread, imwrite, IMREAD_COLOR};
 use opencv::imgproc::{
-    adaptive_threshold, circle, cvt_color, dilate, get_structuring_element, median_blur,
-    pyr_mean_shift_filtering, resize, COLOR_BGR2Lab, COLOR_Lab2BGR, ADAPTIVE_THRESH_MEAN_C, FILLED,
-    INTER_CUBIC, INTER_NEAREST, LINE_AA, MORPH_RECT, THRESH_BINARY,
+    adaptive_threshold, cvt_color, dilate, get_structuring_element, pyr_mean_shift_filtering,
+    COLOR_BGR2Lab, COLOR_Lab2BGR, ADAPTIVE_THRESH_MEAN_C, MORPH_RECT, THRESH_BINARY,
 };
 use opencv::prelude::*;
 use opencv::ximgproc::anisotropic_diffusion;
+#[cfg(feature = "halftone")]
+use rotated_grid::{Angle, GridPoint, GridPositionIterator};
 use std::error::Error;
 
 /// An image in BGR color space.
@@ -22,7 +21,7 @@ struct Lab(Mat);
 struct Gray(Mat);
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let image = Bgr(imread("me.jpeg", IMREAD_COLOR)?);
+    let image = Bgr(imread("grumpy-cat.jpg", IMREAD_COLOR)?);
     imshow("Original", &image.0)?;
 
     let lab_image = bgr_to_lab(image)?;
@@ -31,7 +30,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let gray = gray_from_lab(&image_blurred)?;
     let dilated_edges = get_edges(gray)?;
     let image = lab_to_bgr(segmented_image)?;
-    // let image = halftone(image)?;
+    #[cfg(feature = "halftone")]
+    let image = halftone(image)?;
     let cartoon = combine_image_and_edges(image, dilated_edges)?;
 
     imshow("Cartoon", &cartoon)?;
@@ -132,8 +132,13 @@ fn anisotropic_blur(Lab(lab_image): &Lab) -> Result<Lab, Box<dyn Error>> {
 }
 
 /// Applies an halftone color effect.
-#[allow(dead_code)]
+#[cfg(feature = "halftone")]
 fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
+    use opencv::core::{merge, CV_8UC1};
+    use opencv::imgproc::{
+        circle, median_blur, resize, FILLED, INTER_CUBIC, INTER_NEAREST, LINE_AA,
+    };
+
     // Using CMYK would be more true to the cause but we'll just fake it.
     let mut channels = Vector::<Mat>::new();
     split(&image, &mut channels)?;
@@ -154,6 +159,16 @@ fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
             INTER_NEAREST,
         )?;
 
+        let grid = GridPositionIterator::new(
+            resized.rows() as _,
+            resized.cols() as _,
+            7.0,
+            7.0,
+            0.0,
+            0.0,
+            Angle::from_degrees(33.0 * channel_idx as f64),
+        );
+
         let mut canvas = Mat::new_rows_cols_with_default(
             resized.rows(),
             resized.cols(),
@@ -161,29 +176,28 @@ fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
             Scalar::default(),
         )?;
 
-        let cols = resized.cols() as usize;
-        let rows = resized.rows() as usize;
-
         // The grids should be rotated; for simplicity, we simply offset them.
-        for y in ((3 + channel_idx)..cols).step_by(7) {
-            for x in ((3 + channel_idx)..rows).step_by(7) {
-                let pixel: f32 = *resized.at_2d::<u8>(x as _, y as _)? as _;
-                let intensity = pixel / 255.0;
-                let radius = intensity * 7.5;
-                debug_assert!(radius >= 0.0 && radius <= 255.0);
-
-                let center = Point::new(y as _, x as _);
-                let color = Scalar::from(intensity.sqrt() as f64 * 255.0);
-                circle(
-                    &mut canvas,
-                    center,
-                    radius as i32,
-                    color,
-                    FILLED,
-                    LINE_AA,
-                    0,
-                )?;
+        for GridPoint { x, y } in grid {
+            if x >= resized.rows() as _ || y >= resized.cols() as _ {
+                continue;
             }
+
+            let pixel: f32 = *resized.at_2d::<u8>(x as _, y as _).unwrap() as _;
+            let intensity = pixel / 255.0;
+            let radius = intensity * 7.5;
+            debug_assert!(radius >= 0.0 && radius <= 255.0);
+
+            let center = Point::new(y as _, x as _);
+            let color = Scalar::from(intensity.sqrt() as f64 * 255.0);
+            circle(
+                &mut canvas,
+                center,
+                radius as i32,
+                color,
+                FILLED,
+                LINE_AA,
+                0,
+            )?;
         }
 
         let mut resized = Mat::default();
