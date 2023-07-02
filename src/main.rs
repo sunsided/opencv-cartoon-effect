@@ -134,6 +134,9 @@ fn anisotropic_blur(Lab(lab_image): &Lab) -> Result<Lab, Box<dyn Error>> {
 /// Applies an halftone color effect.
 #[cfg(feature = "halftone")]
 fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
+    // Apply gamma correction to brighten up the image.
+    const GAMMA: f32 = 1.0 / 1.3;
+
     use opencv::core::{merge, CV_8UC1};
     use opencv::imgproc::{
         circle, median_blur, resize, FILLED, INTER_CUBIC, INTER_NEAREST, LINE_AA,
@@ -183,7 +186,7 @@ fn halftone(Bgr(image): Bgr) -> Result<Bgr, Box<dyn Error>> {
             }
 
             let pixel: f32 = *resized.at_2d::<u8>(x as _, y as _).unwrap() as _;
-            let intensity = pixel / 255.0;
+            let intensity = (pixel / 255.0).powf(GAMMA);
             let radius = intensity * 7.5;
             debug_assert!(radius >= 0.0 && radius <= 255.0);
 
