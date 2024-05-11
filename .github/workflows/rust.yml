@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Dovyski/setup-opencv-action@v1.1
-        with:
-          opencv-version: '4.6.0'
-          install-deps: false
+      - name: Install OpenCV
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopencv-dev libclang-dev
       - name: Run Tests
         run: cargo test
