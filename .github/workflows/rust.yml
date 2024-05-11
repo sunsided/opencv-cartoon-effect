@@ -1,0 +1,23 @@
+---
+name: Rust
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Dovyski/setup-opencv-action@v1.1
+        with:
+          opencv-version: '4.6.0'
+          install-deps: false
+      - name: Run Tests
+        run: cargo test
